@@ -160,7 +160,7 @@ ssp126_ts <- align_ssp_to_hist(ssp126_ts, hist_ts)
 ssp370_ts <- align_ssp_to_hist(ssp370_ts, hist_ts)
 ssp585_ts <- align_ssp_to_hist(ssp585_ts, hist_ts)
 
-# 30-day rolling mean 
+# 30-day rolling mean
 hist_ts$roll30 <- zoo::rollapply(hist_ts$tas, 30, mean, align = "right", fill = NA)
 
 # Combine into one Czechia tas series (1850-2100)
@@ -206,7 +206,7 @@ roll30_trailing <- function(x) zoo::rollapply(x, 30, mean, align = "right", part
 # Historical smoothing uses only historical years
 hist_sm <- hist_ann |> dplyr::arrange(year) |> dplyr::mutate(tas_30yr = roll30_trailing(tas))
 
-# For each SSP, compute smoothing using historical+that SSP 
+# For each SSP, compute smoothing using historical+that SSP
 sm_one <- function(ssp_ann, ssp_label) {
   comb <- dplyr::bind_rows(
     dplyr::mutate(hist_ann, scenario = ssp_label),
