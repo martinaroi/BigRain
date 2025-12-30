@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment 04: Climate Data Downscaling Analysis</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            page-break-before: always;
+        }
+        h1:first-of-type {
+            page-break-before: auto;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-bottom: 2px solid #95a5a6;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+        }
+        .header h1 {
+            margin: 0;
+            border: none;
+            page-break-before: auto;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        .author {
+            font-style: italic;
+            margin-top: 10px;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 0.85em;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .figure-caption {
+            text-align: center;
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: 10px;
+            margin-bottom: 30px;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .section-group {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        @media print {
+            body {
+                max-width: 100%;
+                padding: 0;
+            }
+            h1 {
+                page-break-before: always;
+            }
+            h1:first-of-type {
+                page-break-before: auto;
+            }
+            img {
+                page-break-inside: avoid;
+            }
+            table {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Assignment 04: Climate Data Downscaling Analysis</h1>
+    <div class="subtitle">VX107Z, 16Z - Big Data Analysis and Cloud Computing in R</div>
+    <div class="author"><strong>Martina Roithmeier</strong></div>
+</div>
+
+<h1>1. Introduction</h1>
+
+<p>Climate change projections are essential for understanding future environmental conditions and planning adaptation strategies. The Shared Socioeconomic Pathway 3-7.0 (SSP3-7.0) represents a high-emission scenario where greenhouse gas emissions continue to rise throughout the 21st century, resulting in significant global warming.</p>
+
+<p>This analysis focuses on downscaling climate model data for the Czech Republic under the SSP3-7.0 scenario. Downscaling is a critical technique in climate science that transforms coarse-resolution global climate model (GCM) outputs into finer spatial resolutions needed for regional and local impact assessments.</p>
+
+<h2>1.1 Objectives</h2>
+
+<p>The primary objectives of this assignment are:</p>
+
+<ol>
+    <li>Identify the years when global mean temperature reaches 1.5°C and 2.0°C warming thresholds under SSP3-7.0</li>
+    <li>Apply two different downscaling methods (Bilinear Interpolation and Nearest Neighbor) to temperature data</li>
+    <li>Perform two-stage downscaling from coarse resolution to progressively finer resolutions</li>
+    <li>Compare the performance of both downscaling methods using statistical metrics</li>
+    <li>Generate visualizations showing spatial patterns at different warming levels</li>
+</ol>
+
+<h2>1.2 Study Area</h2>
+
+<p>The Czech Republic (CZE) is located in Central Europe, bounded approximately by:</p>
+
+<ul>
+    <li><strong>Longitude:</strong> 12°E to 19°E</li>
+    <li><strong>Latitude:</strong> 48°N to 51°N</li>
+</ul>
+
+<p>The country's diverse topography, ranging from lowlands to mountainous regions, makes it an interesting case study for evaluating downscaling methods.</p>
+
+<h1>2. Methods</h1>
+
+<h2>2.1 Data Sources</h2>
+
+<div class="section-group">
+<p><strong>Climate Model Data:</strong></p>
+<ul>
+    <li><strong>Model:</strong> GFDL-ESM4 (Geophysical Fluid Dynamics Laboratory Earth System Model 4)</li>
+    <li><strong>Scenario:</strong> SSP3-7.0 (high emissions pathway)</li>
+    <li><strong>Variable:</strong> Daily mean temperature (tas)</li>
+    <li><strong>Temporal coverage:</strong> 2015-2100</li>
+    <li><strong>Original spatial resolution:</strong> ~1.25° × 1.0° (approximately 138 km × 111 km)</li>
+    <li><strong>File:</strong> <code>DATA/SSP370/all_SSP370_2015_2100.nc</code></li>
+</ul>
+
+<p><strong>Warming Threshold Years:</strong></p>
+<p>Based on global mean temperature analysis, the SSP3-7.0 scenario reaches:</p>
+<ul>
+    <li><strong>1.5°C warming:</strong> Year 2078</li>
+    <li><strong>2.0°C warming:</strong> Year 2089</li>
+</ul>
+</div>
+
+<h2>2.2 Analysis Steps</h2>
+
+<h3>Data Extraction</h3>
+
+<p>The analysis workflow consists of the following steps:</p>
+
+<ol>
+    <li><strong>NetCDF Data Loading:</strong> Open the NetCDF file and extract spatial dimensions (longitude, latitude) and temporal information</li>
+    <li><strong>Temporal Subsetting:</strong> For each warming threshold year, extract all daily temperature values</li>
+    <li><strong>Annual Aggregation:</strong> Calculate annual mean temperature across all days</li>
+    <li><strong>Unit Conversion:</strong> Convert temperature from Kelvin to Celsius</li>
+    <li><strong>Spatial Cropping:</strong> Extract data for the Czech Republic extent</li>
+</ol>
+
+<h3>Downscaling Methods</h3>
+
+<p>Two downscaling methods were applied:</p>
+
+<div class="section-group">
+<p><strong>Method 1: Bilinear Interpolation</strong></p>
+<ul>
+    <li>Uses weighted average of four nearest neighbor cells</li>
+    <li>Produces smooth, continuous surfaces</li>
+    <li>Preserves gradual spatial transitions</li>
+    <li>Computationally efficient</li>
+</ul>
+
+<p><strong>Method 2: Nearest Neighbor</strong></p>
+<ul>
+    <li>Assigns value from the closest grid cell</li>
+    <li>Preserves original values without smoothing</li>
+    <li>Creates blocky appearance at coarser resolutions</li>
+    <li>Extremely fast computation</li>
+</ul>
+</div>
+
+<h3>Two-Stage Downscaling Process</h3>
+
+<p>The downscaling was performed in two stages:</p>
+
+<ol>
+    <li><strong>Stage 1:</strong> Original resolution (~138 km) → 69 km resolution (factor of 2)</li>
+    <li><strong>Stage 2:</strong> 69 km resolution → 35 km resolution (factor of 2)</li>
+</ol>
+
+<p>This progressive approach allows comparison at multiple scales.</p>
+
+<h2>2.3 Data Processing - Code</h2>
+
+<p>Below is the core R code used for the analysis:</p>
+
+<pre><code>library(ncdf4)
+library(terra)
+library(rnaturalearth)
+library(sf)
+
+# Function to extract annual mean temperature for a specific year
+get_annual_mean <- function(year) {
+  nc <- nc_open(nc_file)
+  
+  # Get dimensions
+  lon <- ncvar_get(nc, "lon")
+  lat <- ncvar_get(nc, "lat")
+  time <- ncvar_get(nc, "time")
+  
+  # Parse time and find year indices
+  time_units <- ncatt_get(nc, "time", "units")$value
+  time_origin <- as.Date(sub(".*since ", "", time_units))
+  dates <- time_origin + as.numeric(time)
+  idx <- which(format(dates, "%Y") == as.character(year))
+  
+  # Read only this year's data (avoid memory issues)
+  nlon <- length(lon)
+  nlat <- length(lat)
+  year_start <- min(idx)
+  year_count <- length(idx)
+  
+  tas_year <- ncvar_get(nc, "tas", 
+                        start = c(1, 1, year_start),
+                        count = c(nlon, nlat, year_count))
+  nc_close(nc)
+  
+  # Convert K to C and calculate annual mean
+  tas_year <- tas_year - 273.15
+  annual <- apply(tas_year, c(1,2), mean, na.rm = TRUE)
+  
+  # Create raster
+  r <- rast(nrows = nlat, ncols = nlon,
+            xmin = min(lon), xmax = max(lon),
+            ymin = min(lat), ymax = max(lat),
+            crs = "EPSG:4326")
+  values(r) <- as.vector(t(annual[, ncol(annual):1]))
+  
+  return(r)
+}
+
+# Extract data for warming years
+r_1.5 <- get_annual_mean(2078)
+r_2.0 <- get_annual_mean(2089)
+
+# Crop to Czech Republic
+cze_ext <- ext(12, 19, 48, 51)
+r_1.5 <- crop(r_1.5, cze_ext)
+r_2.0 <- crop(r_2.0, cze_ext)
+
+# Two-stage downscaling - Bilinear
+r_1.5_bi25 <- disagg(r_1.5, fact = 2, method = "bilinear")
+r_1.5_bi12 <- disagg(r_1.5_bi25, fact = 2, method = "bilinear")
+
+# Two-stage downscaling - Nearest Neighbor
+r_1.5_nn25 <- disagg(r_1.5, fact = 2, method = "near")
+r_1.5_nn12 <- disagg(r_1.5_nn25, fact = 2, method = "near")
+</code></pre>
+
+<div class="highlight">
+<p><strong>Key Features:</strong></p>
+<ul>
+    <li><strong>Memory-efficient loading:</strong> Reads only one year at a time using start and count parameters</li>
+    <li><strong>Proper orientation:</strong> Transposes and flips matrix to match geographic coordinates</li>
+    <li><strong>Progressive downscaling:</strong> Uses terra::disagg() with factor=2 twice for each method</li>
+</ul>
+</div>
+
+<h1>3. Results</h1>
+
+<h2>3.1 Mapping and Downscaling Procedure</h2>
+
+<h3>1.5°C Warming Level (Year 2078)</h3>
+
+<img src="OUTPUTS_ASSIGNMENT04/maps_1.5C.png" alt="Maps for 1.5°C warming">
+<div class="figure-caption">
+    <strong>Figure 1:</strong> Temperature distribution at 1.5°C warming threshold (2078) showing original resolution and downscaled outputs using Bilinear Interpolation and Nearest Neighbor methods. The difference map shows temperature discrepancies between the two methods.
+</div>
+
+<p><strong>Observations:</strong></p>
+<ul>
+    <li><strong>Original:</strong> Shows general temperature patterns across Czech Republic with coarse grid cells</li>
+    <li><strong>Bilinear 25km & 12.5km:</strong> Produces smooth transitions between grid cells, creating continuous temperature gradients</li>
+    <li><strong>Nearest Neighbor 25km & 12.5km:</strong> Preserves original values, resulting in blocky appearance with sharp boundaries</li>
+    <li><strong>Difference Map:</strong> Highlights areas where the two methods diverge, typically at edges and high-gradient zones</li>
+</ul>
+
+<h3>2.0°C Warming Level (Year 2089)</h3>
+
+<img src="OUTPUTS_ASSIGNMENT04/maps_2.0C.png" alt="Maps for 2.0°C warming">
+<div class="figure-caption">
+    <strong>Figure 2:</strong> Temperature distribution at 2.0°C warming threshold (2089) showing original resolution and downscaled outputs using both methods. Similar patterns to 1.5°C but with overall higher temperatures.
+</div>
+
+<p><strong>Observations:</strong></p>
+<ul>
+    <li>Overall temperature increase of approximately 0.5°C compared to 1.5°C warming level</li>
+    <li>Spatial patterns remain similar but with warmer absolute values</li>
+    <li>Downscaling method differences are consistent across both warming levels</li>
+</ul>
+
+<h2>3.2 Statistical Comparison</h2>
+
+<p><strong>Table 1:</strong> Statistical comparison of downscaled temperature data (°C) for both warming levels and both methods at different resolutions</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Warming Level</th>
+            <th>Resolution</th>
+            <th>Method</th>
+            <th>Min (°C)</th>
+            <th>Max (°C)</th>
+            <th>Mean (°C)</th>
+            <th>Sum (°C)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style="background-color: #e3f2fd;">
+            <td rowspan="5"><strong>1.5°C (2078)</strong></td>
+            <td>Original (~138km)</td>
+            <td>-</td>
+            <td>10.2</td>
+            <td>13.8</td>
+            <td>11.9</td>
+            <td>214.2</td>
+        </tr>
+        <tr style="background-color: #e3f2fd;">
+            <td>25km</td>
+            <td>Bilinear</td>
+            <td>10.3</td>
+            <td>13.6</td>
+            <td>11.9</td>
+            <td>857.0</td>
+        </tr>
+        <tr style="background-color: #e3f2fd;">
+            <td>25km</td>
+            <td>Nearest Neighbor</td>
+            <td>10.2</td>
+            <td>13.8</td>
+            <td>11.9</td>
+            <td>857.2</td>
+        </tr>
+        <tr style="background-color: #e3f2fd;">
+            <td>12.5km</td>
+            <td>Bilinear</td>
+            <td>10.4</td>
+            <td>13.5</td>
+            <td>11.9</td>
+            <td>3428.2</td>
+        </tr>
+        <tr style="background-color: #e3f2fd;">
+            <td>12.5km</td>
+            <td>Nearest Neighbor</td>
+            <td>10.2</td>
+            <td>13.8</td>
+            <td>11.9</td>
+            <td>3428.6</td>
+        </tr>
+        
+        <tr style="background-color: #fff3e0;">
+            <td rowspan="5"><strong>2.0°C (2089)</strong></td>
+            <td>Original (~138km)</td>
+            <td>-</td>
+            <td>10.7</td>
+            <td>14.3</td>
+            <td>12.4</td>
+            <td>223.2</td>
+        </tr>
+        <tr style="background-color: #fff3e0;">
+            <td>25km</td>
+            <td>Bilinear</td>
+            <td>10.8</td>
+            <td>14.1</td>
+            <td>12.4</td>
+            <td>892.9</td>
+        </tr>
+        <tr style="background-color: #fff3e0;">
+            <td>25km</td>
+            <td>Nearest Neighbor</td>
+            <td>10.7</td>
+            <td>14.3</td>
+            <td>12.4</td>
+            <td>893.1</td>
+        </tr>
+        <tr style="background-color: #fff3e0;">
+            <td>12.5km</td>
+            <td>Bilinear</td>
+            <td>10.9</td>
+            <td>14.0</td>
+            <td>12.4</td>
+            <td>3571.5</td>
+        </tr>
+        <tr style="background-color: #fff3e0;">
+            <td>12.5km</td>
+            <td>Nearest Neighbor</td>
+            <td>10.7</td>
+            <td>14.3</td>
+            <td>12.4</td>
+            <td>3572.3</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Key Findings:</h3>
+
+<div class="section-group">
+<p><strong>Temperature Range:</strong></p>
+<ul>
+    <li>At 1.5°C warming (2078): Temperature across CZ ranges from approximately 10-14°C</li>
+    <li>At 2.0°C warming (2089): Temperature increases to approximately 11-15°C</li>
+    <li>This represents a ~0.5°C increase across the region</li>
+</ul>
+
+<p><strong>Method Comparison:</strong></p>
+<ol>
+    <li><strong>Minimum Values:</strong> Both methods preserve similar minimum temperatures</li>
+    <li><strong>Maximum Values:</strong> Bilinear interpolation tends to slightly reduce maximum values due to smoothing</li>
+    <li><strong>Mean Temperature:</strong> Nearly identical between methods, showing consistency in spatial averaging</li>
+    <li><strong>Sum:</strong> Proportional to mean × area, both methods maintain similar total heat content</li>
+</ol>
+
+<p><strong>Resolution Effects:</strong></p>
+<ul>
+    <li>Downscaling increases the number of grid cells by factor of 4 at each stage</li>
+    <li>Despite increased resolution, mean values remain stable</li>
+    <li>Sum increases proportionally with grid cell count, as expected</li>
+</ul>
+</div>
+
+<h1>4. Conclusion</h1>
+
+<p>This analysis successfully demonstrated the application of two different downscaling methods to climate model data for the Czech Republic under the high-emission SSP3-7.0 scenario.</p>
+
+<h2>4.1 Main Results:</h2>
+
+<ol>
+    <li><strong>Warming Thresholds:</strong> Under SSP3-7.0, the Czech Republic reaches 1.5°C warming around 2078 and 2.0°C warming around 2089, indicating rapid temperature increase in the latter half of the 21st century.</li>
+    
+    <li><strong>Downscaling Performance:</strong> Both Bilinear Interpolation and Nearest Neighbor methods successfully downscaled the data from ~138km to ~35km resolution. While they produce visually different outputs (smooth vs. blocky), their statistical properties are remarkably similar.</li>
+    
+    <li><strong>Temperature Patterns:</strong> The analysis reveals spatially heterogeneous warming across Czech Republic, with some regions experiencing slightly higher temperature increases than others.</li>
+</ol>
+
+<h2>4.2 Implications:</h2>
+
+<p>The projected temperature increases have significant implications for:</p>
+
+<ul>
+    <li><strong>Agriculture:</strong> Changes in growing seasons and crop suitability</li>
+    <li><strong>Water Resources:</strong> Altered precipitation patterns and increased evapotranspiration</li>
+    <li><strong>Infrastructure:</strong> Need for climate adaptation in urban planning</li>
+    <li><strong>Ecosystems:</strong> Shifts in species distributions and ecosystem composition</li>
+</ul>
+
+<p>The consistency between downscaling methods provides confidence in the robustness of the spatial patterns identified.</p>
+
+<h1>5. Discussion</h1>
+
+<h2>5.1 Limitations of Results</h2>
+
+<p>Several important limitations should be considered when interpreting these results:</p>
+
+<h3>1. Single Climate Model</h3>
+<ul>
+    <li>Analysis uses only GFDL-ESM4; different models may produce different projections</li>
+    <li>Multi-model ensemble would provide uncertainty estimates</li>
+    <li>Model biases can propagate through downscaling</li>
+</ul>
+
+<h3>2. Statistical vs. Dynamical Downscaling</h3>
+<ul>
+    <li>This study used statistical interpolation methods only</li>
+    <li>Dynamical downscaling (using regional climate models) would better represent physical processes</li>
+    <li>Local topographic effects, land-sea contrasts, and urban heat islands are not captured</li>
+</ul>
+
+<h3>3. Data Variable Limitation</h3>
+<ul>
+    <li>Originally intended to analyze precipitation, but data was country-mean (not gridded)</li>
+    <li>Used temperature as proxy, which behaves differently than precipitation</li>
+    <li>Precipitation downscaling typically requires more sophisticated methods due to spatial intermittency</li>
+</ul>
+
+<h3>4. Coarse Input Resolution</h3>
+<ul>
+    <li>Starting resolution (~138km) captures only a few cells over Czech Republic</li>
+    <li>Downscaling cannot add information not present in original data</li>
+    <li>Fine-scale features are interpolated, not physically modeled</li>
+</ul>
+
+<h3>5. Method Limitations</h3>
+<ul>
+    <li><strong>Bilinear:</strong> Smooths peaks and valleys, may underestimate extremes</li>
+    <li><strong>Nearest Neighbor:</strong> Preserves original values but creates artificial boundaries</li>
+    <li>Neither method accounts for elevation, land cover, or other physical factors</li>
+</ul>
+
+<h3>6. Temporal Aggregation</h3>
+<ul>
+    <li>Analysis uses annual means, masking seasonal and extreme event changes</li>
+    <li>Daily or seasonal analysis would reveal more about climate change impacts</li>
+</ul>
+
+<h2>5.2 What Was Most Interesting to Me</h2>
+
+<p>The most fascinating aspect was seeing how different downscaling methods produce visually distinct results (smooth vs. blocky) yet maintain nearly identical statistical properties. This highlights that the choice of method depends on the application:</p>
+
+<ul>
+    <li>For visualization and smooth maps → <strong>Bilinear</strong></li>
+    <li>For preserving exact original values → <strong>Nearest Neighbor</strong></li>
+</ul>
+
+<p>The process of working with large NetCDF files and learning efficient data loading strategies was also very educational.</p>
+
+<h2>5.3 What Was Surprising to Me</h2>
+
+<p><strong>Computational Challenges:</strong> I initially underestimated the memory requirements of loading daily data for 86 years. Learning to use <code>start</code> and <code>count</code> parameters in <code>ncvar_get()</code> to load only one year at a time was crucial.</p>
+
+<p><strong>Speed Difference:</strong> The dramatic difference in computation time between methods was unexpected. Nearest Neighbor is essentially instantaneous, while the initially planned Kriging approach would have taken 30+ minutes for the same dataset.</p>
+
+<p><strong>Data Structure Variability:</strong> Discovering that the precipitation file was structured as country-mean (1D time series) rather than gridded data (3D) was unexpected and required adapting the analysis to use temperature instead.</p>
+
+<p><strong>Method Convergence:</strong> I was surprised that despite their different approaches, both methods yielded such similar statistical summaries, suggesting that for regional-scale analysis, the choice of simple interpolation method may be less critical than often assumed.</p>
+
+</body>
+</html>
